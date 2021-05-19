@@ -1,0 +1,23 @@
+version: "3.7"
+services:
+  postgres:
+    image: postgres
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    # volumes:
+    #   - ~/volume/pgdata:/var/lib/postgresql/data
+
+
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: pgadmin4@pgadmin.org
+      PGADMIN_DEFAULT_PASSWORD: admin
+    # volumes:
+    #     - ~/volume/pgadmin:/root/.pgadmin
+
+    ports:
+      - "7777:80"
