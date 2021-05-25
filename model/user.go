@@ -7,3 +7,7 @@ type User struct {
 	Username string
 	Password string
 }
+
+func (u *User) TableName() string {
+	return "users"
+}

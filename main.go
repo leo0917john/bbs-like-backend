@@ -6,19 +6,15 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	"bbs-like-backend/db"
 	"bbs-like-backend/handler"
-)
-
-const (
-	DB_HOST     = "0.0.0.0:5432"
-	DB_NAME     = "test"
-	DB_USER     = "postgre_user"
-	DB_PASSWORD = "postgre_pwd"
+	"bbs-like-backend/middleware"
 )
 
 type User struct {
@@ -27,7 +23,14 @@ type User struct {
 	Password string
 }
 
-var user_map = make(map[string]string)
+const (
+	DB_HOST     = "0.0.0.0:5432"
+	DB_NAME     = "test"
+	DB_USER     = "postgre_user"
+	DB_PASSWORD = "postgre_pwd"
+)
+
+// var user_map = make(map[string]string)
 
 func HandleHello(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
@@ -91,8 +94,12 @@ func DBconnection() (db *gorm.DB) {
 	return gormDB
 }
 
+func handleCors(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"msg": "successful"})
+}
+
 func main() {
-	// db := DBconnection()
+
 	// db.AutoMigrate(&User{})
 	// user := User{Username: "Leo", Password: "123"}
 
@@ -103,11 +110,16 @@ func main() {
 	// } else {
 	// 	fmt.Println("Data Create complete")
 	// }
-
+	db.Open()
 	route := gin.Default()
+	route.Use(cors.New(middleware.Cors_init()))
+
 	route.GET("/test", HandleHello)
 	route.OPTIONS("/register", HandleRegister)
 	route.POST("/register", HandleRegister)
-	route.GET("/user", handler.UserCreate)
+	// route.OPTIONS("/user", handler.UserCreate)
+	route.POST("/user", handler.UserCreate)
+	route.POST("/userlist", handler.GetList)
+	route.POST("/cors", handleCors)
 	route.Run(":5050")
 }
