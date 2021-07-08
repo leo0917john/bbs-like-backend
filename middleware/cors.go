@@ -8,7 +8,7 @@ import (
 
 var IsDev bool
 
-func Cors_init() cors.Config {
+func CorsSetting() cors.Config {
 
 	// config := cors.DefaultConfig()
 	corsConf := cors.Config{

@@ -13,19 +13,6 @@ import (
 // var cnt int
 
 func UserCreate(c *gin.Context) {
-	// var params map[string]interface{}
-
-	// err := c.ShouldBindJSON(&params)
-	// if err != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
-	// 	return
-	// }
-
-	// username := params["username"].(string)
-	// password := params["password"].(string)
-	// resp := fmt.Sprintf("user:%s pwd:%s", username, password)
-	// fmt.Printf("user:%s \t pwd:%s\n", username, password)
-	// c.JSON(http.StatusOK, gin.H{"msg": resp})
 	var user *model.User
 	var params map[string]interface{}
 
@@ -37,8 +24,11 @@ func UserCreate(c *gin.Context) {
 
 	username := params["username"].(string)
 	password := params["password"].(string)
-	if userExists(db.DB, username) {
-		user = &model.User{Username: username, Password: password}
+	if userNotExists(db.DB, username) {
+		user = &model.User{
+			Username: username,
+			Password: password,
+		}
 	} else {
 		c.JSON(http.StatusBadRequest, gin.H{"msg": "Username exist"})
 		return
@@ -57,7 +47,7 @@ func UserCreate(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"msg": "commit"})
 }
 
-func GetList(c *gin.Context) {
+func GetUsersList(c *gin.Context) {
 	type Username struct {
 		Username string
 	}
@@ -66,7 +56,7 @@ func GetList(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"context": users})
 }
 
-func userExists(db *gorm.DB, username string) bool {
+func userNotExists(db *gorm.DB, username string) bool {
 	// sqlStmt := `SELECT username FROM userinfo WHERE username = ?`
 	// err := db.QueryRow(sqlStmt, username).Scan(&username)
 	var users []model.User

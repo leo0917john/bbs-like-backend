@@ -19,15 +19,6 @@ const (
 var DB *gorm.DB
 
 func Open() {
-	// var err error
-	// var url string
-	// url = conf.GetEnv("DATABASE_URL")
-	// if env == "test" {
-	// 	url = conf.GetEnv("DATABASE_TESTURL")
-	// }
-	// if DB, err = gorm.Open(postgres.Open(url), &gorm.Config{}); err != nil {
-	// 	panic(err.Error())
-	// }
 	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", DB_USER, DB_PASSWORD, DB_HOST, DB_NAME)
 	sqldb, err := sql.Open("postgres", connStr)
 	if err != nil {
@@ -39,7 +30,7 @@ func Open() {
 		log.Fatal(err)
 		return
 	}
-	fmt.Println("successfull connected!")
+	fmt.Println("Got db response")
 	db, err := gorm.Open(postgres.New(postgres.Config{
 		Conn: sqldb,
 	}), &gorm.Config{})
@@ -47,7 +38,7 @@ func Open() {
 		fmt.Println("Error connecting database")
 		panic(err.Error())
 	} else {
-		fmt.Println("Connected to database")
+		fmt.Println("DB connection successful")
 	}
 	DB = db
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -14,6 +15,7 @@ import (
 
 	"bbs-like-backend/db"
 	"bbs-like-backend/handler"
+	"bbs-like-backend/lib/security"
 	"bbs-like-backend/middleware"
 )
 
@@ -23,48 +25,33 @@ type User struct {
 	Password string
 }
 
+// Temporary setting declaration
+// TODO: move to .env file
 const (
 	DB_HOST     = "0.0.0.0:5432"
 	DB_NAME     = "test"
 	DB_USER     = "postgre_user"
 	DB_PASSWORD = "postgre_pwd"
+	//  JWT setting
+	SECRET_KEY     = "secret"
+	TOKEN_LIFETIME = 120
 )
 
-// var user_map = make(map[string]string)
+func init() {
+
+	// jwt setting
+	secretKey := []byte(SECRET_KEY)
+	tokenLifeTime := time.Duration(TOKEN_LIFETIME) * time.Minute
+
+	// jwt init setting
+	security.Init(secretKey, tokenLifeTime)
+}
 
 func HandleHello(c *gin.Context) {
 	c.Header("Access-Control-Allow-Origin", "*")
 	c.JSON(http.StatusOK, gin.H{
 		"message": "hello",
 	})
-
-}
-
-func HandleRegister(c *gin.Context) {
-	var user User
-	method := c.Request.Method
-	if method == "OPTIONS" {
-		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-Control-Allow-Headers", "Content-Type,AccessToken,X-CSRF-Token, Authorization") //自定义 Header
-		// c.Header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-		// c.Header("Access-Control-Expose-Headers", "Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type")
-		// c.Header("Access-Control-Allow-Credentials", "true")
-		c.AbortWithStatus(http.StatusNoContent)
-		return
-	}
-	c.Header("Access-Control-Allow-Origin", "*")
-	err := c.ShouldBindJSON(&user)
-	if err != nil {
-		fmt.Println("register failed")
-		c.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"msg": "successful"})
-	fmt.Println("register success")
-}
-
-func HandleUserList(c *gin.Context) {
 
 }
 
@@ -100,26 +87,14 @@ func handleCors(c *gin.Context) {
 
 func main() {
 
-	// db.AutoMigrate(&User{})
-	// user := User{Username: "Leo", Password: "123"}
-
-	// result := db.Create(&user)
-	// if result.Error != nil {
-	// 	log.Fatal(result.Error)
-	// 	panic(result.Error)
-	// } else {
-	// 	fmt.Println("Data Create complete")
-	// }
 	db.Open()
 	route := gin.Default()
-	route.Use(cors.New(middleware.Cors_init()))
+	route.Use(cors.New(middleware.CorsSetting()))
 
 	route.GET("/test", HandleHello)
-	route.OPTIONS("/register", HandleRegister)
-	route.POST("/register", HandleRegister)
-	// route.OPTIONS("/user", handler.UserCreate)
 	route.POST("/user", handler.UserCreate)
-	route.POST("/userlist", handler.GetList)
+	route.GET("/userlist", handler.GetUsersList)
 	route.POST("/cors", handleCors)
+	route.POST("/login", handler.Login)
 	route.Run(":5050")
 }
