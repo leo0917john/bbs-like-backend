@@ -1,19 +1,36 @@
 package handler
 
 import (
-	"bbs-like-backend/db"
 	"bbs-like-backend/model"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
-// var cnt int
+type userHandler struct {
+	UService model.UserService
+}
 
-func UserCreate(c *gin.Context) {
-	var user *model.User
+func NewUserHandle(e *gin.Engine, us model.UserService) {
+	handler := &userHandler{
+		UService: us,
+	}
+	e.GET("/test", handler.test)
+	// route.GET("/test", HandleHello)
+	e.POST("/user", handler.UserCreateHandler)
+	// route.GET("/userlist", handler.GetUsersList)
+	// route.POST("/cors", handleCors)
+	// route.POST("/login", handler.Login)
+}
+
+func (h *userHandler) test(c *gin.Context) {
+	fmt.Println("hello")
+	c.JSON(http.StatusOK, gin.H{"msg": "hello"})
+}
+
+func (h *userHandler) UserCreateHandler(c *gin.Context) {
+	// var user *model.User
 	var params map[string]interface{}
 
 	err := c.ShouldBindJSON(&params)
@@ -24,51 +41,20 @@ func UserCreate(c *gin.Context) {
 
 	username := params["username"].(string)
 	password := params["password"].(string)
-	if userNotExists(db.DB, username) {
-		user = &model.User{
-			Username: username,
-			Password: password,
-		}
-	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": "Username exist"})
-		return
+	new_user := &model.User{
+		Username: username,
+		Password: password,
 	}
-
-	tx := db.DB.Begin()
-	if db.DB != nil {
-		tx.Create(user)
-	} else {
-		db.Show()
-		fmt.Println("db == nil")
-	}
-
-	tx.Commit()
+	h.UService.CreateUser(*new_user)
+	// if userNotExists(db.DB, username) {
+	// 	user = &model.User{
+	// 		Username: username,
+	// 		Password: password,
+	// 	}
+	// } else {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"msg": "Username exist"})
+	// 	return
+	// }
 
 	c.JSON(http.StatusOK, gin.H{"msg": "commit"})
-}
-
-func GetUsersList(c *gin.Context) {
-	type Username struct {
-		Username string
-	}
-	var users []Username
-	db.DB.Model(&model.User{}).Select("Username").Find(&users)
-	c.JSON(http.StatusOK, gin.H{"context": users})
-}
-
-func userNotExists(db *gorm.DB, username string) bool {
-	// sqlStmt := `SELECT username FROM userinfo WHERE username = ?`
-	// err := db.QueryRow(sqlStmt, username).Scan(&username)
-	var users []model.User
-	db.Find(&users, "Username = ?", username)
-	// if err != nil {
-	// 	if err != sql.ErrNoRows {
-	// 		// a real error happened! you should change your function return
-	// 		// to "(bool, error)" and return "false, err" here
-	// 		log.Print(err)
-	// 	}
-
-	// 	return false
-	// }
-	return len(users) == 0
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,10 +12,11 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"bbs-like-backend/db"
 	"bbs-like-backend/handler"
 	"bbs-like-backend/lib/security"
 	"bbs-like-backend/middleware"
+	"bbs-like-backend/repository"
+	"bbs-like-backend/service"
 )
 
 type User struct {
@@ -28,7 +28,8 @@ type User struct {
 // Temporary setting declaration
 // TODO: move to .env file
 const (
-	DB_HOST     = "0.0.0.0:5432"
+	DB_HOST     = "127.0.0.1"
+	DB_PORT     = 5432
 	DB_NAME     = "test"
 	DB_USER     = "postgre_user"
 	DB_PASSWORD = "postgre_pwd"
@@ -55,46 +56,26 @@ func HandleHello(c *gin.Context) {
 
 }
 
-func DBconnection() (db *gorm.DB) {
-	// connStr := "postgres://pqgotest:password@localhost/pqgotest"
-	connStr := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=disable", DB_USER, DB_PASSWORD, DB_HOST, DB_NAME)
-	sqldb, err := sql.Open("postgres", connStr)
-	if err != nil {
-		log.Fatal(err)
-		return nil
-	}
-	err = sqldb.Ping()
-	if err != nil {
-		log.Fatal(err)
-		return nil
-	}
-	fmt.Println("successfull connected!")
-	gormDB, err := gorm.Open(postgres.New(postgres.Config{
-		Conn: sqldb,
-	}), &gorm.Config{})
-	if err != nil {
-		fmt.Println("Error connecting database")
-		panic(err.Error())
-	} else {
-		fmt.Println("Connected to database")
-	}
-	return gormDB
-}
-
 func handleCors(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"msg": "successful"})
 }
 
 func main() {
 
-	db.Open()
 	route := gin.Default()
 	route.Use(cors.New(middleware.CorsSetting()))
-
-	route.GET("/test", HandleHello)
-	route.POST("/user", handler.UserCreate)
-	route.GET("/userlist", handler.GetUsersList)
-	route.POST("/cors", handleCors)
-	route.POST("/login", handler.Login)
+	addr := fmt.Sprintf("host=localhost user=%v password=%v dbname=%v port=%d sslmode=disable", DB_USER, DB_PASSWORD, DB_NAME, DB_PORT)
+	db, err := gorm.Open(postgres.Open(addr), &gorm.Config{})
+	if err != nil {
+		log.Println(err)
+	}
+	pr := repository.NewPostgreSQLRepository(db)
+	us := service.NewUserService(pr)
+	handler.NewUserHandle(route, us)
+	// route.GET("/test", HandleHello)
+	// route.POST("/user", handler.UserCreate)
+	// route.GET("/userlist", handler.GetUsersList)
+	// route.POST("/cors", handleCors)
+	// route.POST("/login", handler.Login)
 	route.Run(":5050")
 }
