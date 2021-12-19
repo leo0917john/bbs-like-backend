@@ -70,12 +70,9 @@ func main() {
 		log.Println(err)
 	}
 	pr := repository.NewPostgreSQLRepository(db)
+	pr.Init()
 	us := service.NewUserService(pr)
 	handler.NewUserHandle(route, us)
-	// route.GET("/test", HandleHello)
-	// route.POST("/user", handler.UserCreate)
-	// route.GET("/userlist", handler.GetUsersList)
-	// route.POST("/cors", handleCors)
-	// route.POST("/login", handler.Login)
+
 	route.Run(":5050")
 }

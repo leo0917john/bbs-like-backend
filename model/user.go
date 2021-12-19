@@ -8,20 +8,30 @@ type User struct {
 	Password string
 }
 
+type UserLoginData struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+}
+
 func (u *User) TableName() string {
 	return "users"
 }
 
 type UserService interface {
 	CreateUser(User) error
-	LoginCheck(User) bool
+	LoginCheck(UserLoginData) bool
+	TableCheck() error
+	GetUsersList(string) ([]User, error)
 }
 
 type UserRepository interface {
-	GetUser()
+	Init()
+	TableExist() error
+	GetUser(string) (User, error)
+	GetUsers(string) ([]User, error)
 	CreateUser(User) error
 	UpadeUser()
 	DeleteUser()
-	FindUser() bool
+	UserExist(string) bool
 	Close()
 }
