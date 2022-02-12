@@ -1,7 +1,8 @@
 package handler
 
 import (
-	"bbs-like-backend/model"
+	"bbs-like-backend/pkg/entity"
+	"bbs-like-backend/pkg/model"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,10 +11,10 @@ import (
 )
 
 type userHandler struct {
-	UService model.UserService
+	UService entity.UserService
 }
 
-func NewUserHandle(e *gin.Engine, us model.UserService) {
+func NewUserHandle(e *gin.Engine, us entity.UserService) {
 	handler := &userHandler{
 		UService: us,
 	}
@@ -22,10 +23,8 @@ func NewUserHandle(e *gin.Engine, us model.UserService) {
 		log.Panic("table not exist")
 	}
 	e.GET("/test", handler.test)
-	// route.GET("/test", HandleHello)
 	e.POST("/user", handler.UserCreateHandler)
 	e.GET("/users", handler.GetUsersList)
-	// route.POST("/cors", handleCors)
 	e.GET("/login", handler.UserLoginHandler)
 }
 

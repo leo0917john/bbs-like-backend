@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"bbs-like-backend/lib/security"
+	security "bbs-like-backend/pkg/module/security/jwt"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"

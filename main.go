@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -10,13 +11,15 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	"gorm.io/driver/postgres"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	"bbs-like-backend/handler"
-	"bbs-like-backend/lib/security"
-	"bbs-like-backend/middleware"
-	"bbs-like-backend/repository"
-	"bbs-like-backend/service"
+	"bbs-like-backend/pkg/handler"
+	"bbs-like-backend/pkg/middleware"
+	"bbs-like-backend/pkg/module/security/jwt"
+	"bbs-like-backend/pkg/repository"
+	"bbs-like-backend/pkg/service"
+	"bbs-like-backend/pkg/version"
 )
 
 type User struct {
@@ -24,6 +27,15 @@ type User struct {
 	Username string
 	Password string
 }
+
+const (
+	sqliteDiskMode = 1
+	sqliteMemNode  = 2
+)
+
+var (
+	printVersion bool
+)
 
 // Temporary setting declaration
 // TODO: move to .env file
@@ -40,12 +52,14 @@ const (
 
 func init() {
 
+	flag.BoolVar(&printVersion, "version", false, "print program build version")
+	flag.Parse()
 	// jwt setting
 	secretKey := []byte(SECRET_KEY)
 	tokenLifeTime := time.Duration(TOKEN_LIFETIME) * time.Minute
 
 	// jwt init setting
-	security.Init(secretKey, tokenLifeTime)
+	jwt.Init(secretKey, tokenLifeTime)
 }
 
 func HandleHello(c *gin.Context) {
@@ -62,17 +76,44 @@ func handleCors(c *gin.Context) {
 
 func main() {
 
+	if printVersion {
+		fmt.Printf("%v \n", version.PrintCLIVersion())
+		return
+	}
+
 	route := gin.Default()
 	route.Use(cors.New(middleware.CorsSetting()))
-	addr := fmt.Sprintf("host=localhost user=%v password=%v dbname=%v port=%d sslmode=disable", DB_USER, DB_PASSWORD, DB_NAME, DB_PORT)
-	db, err := gorm.Open(postgres.Open(addr), &gorm.Config{})
-	if err != nil {
-		log.Println(err)
-	}
+	// db := createPostgreGormDBInstance()
+	db := createSqlite3GormDBInstance(sqliteMemNode)
+
 	pr := repository.NewPostgreSQLRepository(db)
 	pr.Init()
 	us := service.NewUserService(pr)
 	handler.NewUserHandle(route, us)
 
 	route.Run(":5050")
+}
+
+func createSqlite3GormDBInstance(mode int) *gorm.DB {
+	db_path := ""
+	switch mode {
+	case sqliteDiskMode:
+		db_path = "./db/gorm.db"
+	case sqliteMemNode:
+		db_path = ":memory:"
+	}
+	db, err := gorm.Open(sqlite.Open(db_path), &gorm.Config{})
+	if err != nil {
+		fmt.Println(err)
+	}
+	return db
+}
+
+func createPostgreGormDBInstance() *gorm.DB {
+	postgre_url := fmt.Sprintf("host=localhost user=%v password=%v dbname=%v port=%d sslmode=disable", DB_USER, DB_PASSWORD, DB_NAME, DB_PORT)
+	db, err := gorm.Open(postgres.Open(postgre_url), &gorm.Config{})
+	if err != nil {
+		log.Println(err)
+	}
+	return db
 }

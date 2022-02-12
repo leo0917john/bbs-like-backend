@@ -1,16 +1,17 @@
 package service
 
 import (
-	"bbs-like-backend/model"
+	"bbs-like-backend/pkg/entity"
+	"bbs-like-backend/pkg/model"
 	"errors"
 	"log"
 )
 
 type userservice struct {
-	userRepo model.UserRepository
+	userRepo entity.UserRepository
 }
 
-func NewUserService(ur model.UserRepository) model.UserService {
+func NewUserService(ur entity.UserRepository) entity.UserService {
 	return &userservice{
 		userRepo: ur,
 	}

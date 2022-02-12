@@ -1,7 +1,8 @@
 package repository
 
 import (
-	"bbs-like-backend/model"
+	"bbs-like-backend/pkg/entity"
+	"bbs-like-backend/pkg/model"
 	"fmt"
 	"log"
 
@@ -16,7 +17,7 @@ type postgreSQLRepositoryError struct {
 	msg string
 }
 
-func NewPostgreSQLRepository(db *gorm.DB) model.UserRepository {
+func NewPostgreSQLRepository(db *gorm.DB) entity.UserRepository {
 	return &postgreSQLRepository{
 		DB: db,
 	}
@@ -34,7 +35,6 @@ func (pe *postgreSQLRepositoryError) Error() string {
 
 func (pr *postgreSQLRepository) Init() {
 	pr.DB.Debug().AutoMigrate(&model.User{})
-
 }
 
 func (pr *postgreSQLRepository) TableExist() error {
