@@ -16,22 +16,3 @@ type UserLoginData struct {
 func (u *User) TableName() string {
 	return "users"
 }
-
-type UserService interface {
-	CreateUser(User) error
-	LoginCheck(UserLoginData) bool
-	TableCheck() error
-	GetUsersList(string) ([]User, error)
-}
-
-type UserRepository interface {
-	Init()
-	TableExist() error
-	GetUser(string) (User, error)
-	GetUsers(string) ([]User, error)
-	CreateUser(User) error
-	UpadeUser()
-	DeleteUser()
-	UserExist(string) bool
-	Close()
-}
